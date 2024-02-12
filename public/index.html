@@ -8,42 +8,55 @@
 <body>
   <textarea id="editor" cols="80" rows="20"></textarea>
 
-  <!-- Incluir el script de Socket.IO -->
   <script src="/socket.io/socket.io.js"></script>
-  <!-- Importar el archivo del semáforo -->
-  <script src="semaphore.js" type="module"></script>
   <script>
-    // Importar la clase Semaphore
-    import Semaphore from './semaphore.js';
+    class Semaphore {
+      constructor() {
+        this.available = true; // Indica si el recurso está disponible
+        this.queue = []; // Cola para encolar las solicitudes de acceso
+      }
 
-    // Crear una instancia del semáforo
+      acquire() {
+        return new Promise((resolve, reject) => {
+          const request = { resolve, reject };
+
+          if (this.available) {
+            this.available = false;
+            resolve();
+          } else {
+            this.queue.push(request);
+          }
+        });
+      }
+
+      release() {
+        if (this.queue.length > 0) {
+          const nextRequest = this.queue.shift();
+          nextRequest.resolve();
+        } else {
+          this.available = true;
+        }
+      }
+    }
+
     const semaphore = new Semaphore();
 
-    // Conectar con el servidor Socket.IO
     const socket = io();
-    // Obtener el elemento del editor de texto
     const editor = document.getElementById('editor');
 
-    // Escuchar el evento de entrada en el editor
     editor.addEventListener('input', async () => {
       try {
-        // Adquirir el semáforo antes de la edición
-        await semaphore.acquire();
-        // Obtener el texto del editor
+        await semaphore.acquire(); // Adquirir el recurso antes de la edición
         const text = editor.value;
-        // Emitir un evento al servidor para actualizar el texto
         socket.emit('text-update', text);
       } catch (error) {
         console.error('Error al adquirir el recurso:', error);
       } finally {
-        // Liberar el semáforo después de la edición
-        semaphore.release();
+        semaphore.release(); // Liberar el recurso después de la edición
       }
     });
 
-    // Escuchar el evento de actualización de texto desde el servidor
     socket.on('text-update', (data) => {
-      // Actualizar el contenido del editor con el texto recibido
       editor.value = data;
     });
   </script>
