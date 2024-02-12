@@ -12,6 +12,7 @@ io.on('connection', (socket) => {
   console.log('Usuario conectado:', socket.id);
 
   socket.on('text-update', (data) => {
+    // Transmitir actualizaciones de texto a todos los clientes
     io.emit('text-update', data);
   });
 
