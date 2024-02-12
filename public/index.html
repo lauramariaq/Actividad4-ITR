@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -17,6 +17,45 @@
     editor.addEventListener('input', () => {
       const text = editor.value;
       socket.emit('text-update', text);
+    });
+
+    socket.on('text-update', (data) => {
+      editor.value = data;
+    });
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor Colaborativo</title>
+</head>
+<body>
+  <textarea id="editor" cols="80" rows="20"></textarea>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="semaphore.js" type="module"></script>
+  <script>
+    import Semaphore from './semaphore.js';
+
+    const semaphore = new Semaphore();
+
+    const socket = io();
+    const editor = document.getElementById('editor');
+
+    editor.addEventListener('input', async () => {
+      try {
+        await semaphore.acquire(); 
+        const text = editor.value;
+        socket.emit('text-update', text);
+      } catch (error) {
+        console.error('Error al adquirir el recurso:', error);
+      } finally {
+        semaphore.release();
+      }
     });
 
     socket.on('text-update', (data) => {
