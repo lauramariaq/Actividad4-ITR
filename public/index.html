@@ -1,31 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor Colaborativo</title>
-</head>
-<body>
-  <textarea id="editor" cols="80" rows="20"></textarea>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-
-    const editor = document.getElementById('editor');
-
-    editor.addEventListener('input', () => {
-      const text = editor.value;
-      socket.emit('text-update', text);
-    });
-
-    socket.on('text-update', (data) => {
-      editor.value = data;
-    });
-  </script>
-</body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -36,29 +8,42 @@
 <body>
   <textarea id="editor" cols="80" rows="20"></textarea>
 
+  <!-- Incluir el script de Socket.IO -->
   <script src="/socket.io/socket.io.js"></script>
+  <!-- Importar el archivo del semáforo -->
   <script src="semaphore.js" type="module"></script>
   <script>
+    // Importar la clase Semaphore
     import Semaphore from './semaphore.js';
 
+    // Crear una instancia del semáforo
     const semaphore = new Semaphore();
 
+    // Conectar con el servidor Socket.IO
     const socket = io();
+    // Obtener el elemento del editor de texto
     const editor = document.getElementById('editor');
 
+    // Escuchar el evento de entrada en el editor
     editor.addEventListener('input', async () => {
       try {
-        await semaphore.acquire(); 
+        // Adquirir el semáforo antes de la edición
+        await semaphore.acquire();
+        // Obtener el texto del editor
         const text = editor.value;
+        // Emitir un evento al servidor para actualizar el texto
         socket.emit('text-update', text);
       } catch (error) {
         console.error('Error al adquirir el recurso:', error);
       } finally {
+        // Liberar el semáforo después de la edición
         semaphore.release();
       }
     });
 
+    // Escuchar el evento de actualización de texto desde el servidor
     socket.on('text-update', (data) => {
+      // Actualizar el contenido del editor con el texto recibido
       editor.value = data;
     });
   </script>
